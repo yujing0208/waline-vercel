@@ -1,13 +1,9 @@
 // Waline 服务端入口
 // 文档: https://waline.js.org/guide/deploy/vercel.html
-import pkg from '@waline/vercel';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
-// Waline 导出的是 default 或 server
-const handler = pkg.default || pkg.server;
+const waline = require('@waline/vercel');
 
-if (!handler) {
-  console.error('Waline exports:', Object.keys(pkg));
-  throw new Error('Waline server export not found');
-}
-
-export default handler;
+// 导出处理函数
+export default waline.server || waline.default || waline;
