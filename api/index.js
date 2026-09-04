@@ -3,7 +3,10 @@
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
-const waline = require('@waline/vercel');
+const { server } = require('@waline/vercel');
 
-// 导出处理函数
-export default waline.server || waline.default || waline;
+if (!server) {
+  throw new Error('Waline server export not found');
+}
+
+export default server;
