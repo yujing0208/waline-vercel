@@ -1,0 +1,1 @@
+{"name": "waline-comment-server", "version": "1.0.0", "description": "Waline 评论系统服务端", "main": "api/index.js", "type": "module", "scripts": {"start": "vercel dev", "deploy": "vercel --prod"}, "dependencies": {"@waline/vercel": "^1.0.0"}, "engines": {"node": ">=18.0.0"}}
