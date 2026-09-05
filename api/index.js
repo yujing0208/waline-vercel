@@ -65,6 +65,7 @@ async function importRoute(req, res) {
 
   const op = u.searchParams.get('op') || 'schema';
   const urlMode = u.searchParams.get('urlMode') || 'decode';
+  const force = u.searchParams.get('force') === '1';
   let pg;
   try {
     pg = require('pg');
@@ -237,9 +238,15 @@ async function importRoute(req, res) {
         // duplicate guard (like waline): url + nick + comment
         const urlVal = urlMode === 'raw' ? r.url : decodeUrl(String(r.url || ''));
         const dup = await client.query(
-          `SELECT id FROM wl_comment WHERE url=$1 AND nick=$2 AND comment=$3 LIMIT 1`,
+          `SELECT id, pid, rid FROM wl_comment WHERE url=$1 AND nick=$2 AND comment=$3`,
           [urlVal, r.nick || '', r.comment || '']);
-        if (dup.rows.length > 0) { skippedDup++; continue; }
+        if (dup.rows.length > 0) {
+          // 历史数据存在"同内容回复不同人"的真重复；仅当父/根引用完全一致才视为重试
+          const fpid = r.pid ? (idMap.get(r.pid) || null) : null;
+          const frid = r.rid ? (idMap.get(r.rid) || null) : null;
+          const exactDup = dup.rows.some((x) => x.pid === fpid && x.rid === frid);
+          if (exactDup || !force) { skippedDup++; continue; }
+        }
         if (!r.comment) { skippedNoComment++; continue; }
 
         const newId = ++seq;
