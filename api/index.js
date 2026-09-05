@@ -113,6 +113,16 @@ async function importRoute(req, res) {
       return send(res, 200, { ok: true, deleted: d.rowCount });
     }
 
+    // ---------- fix NULLs (waline avatar template crashes on mail=null) ----------
+    if (op === 'fixnulls') {
+      const r1 = await client.query(`UPDATE wl_comment SET mail='' WHERE mail IS NULL`);
+      const r2 = await client.query(`UPDATE wl_comment SET link='' WHERE link IS NULL`);
+      const r3 = await client.query(`UPDATE wl_comment SET ua='' WHERE ua IS NULL`);
+      const r4 = await client.query(`UPDATE wl_comment SET ip='' WHERE ip IS NULL`);
+      const r5 = await client.query(`UPDATE wl_comment SET nick='' WHERE nick IS NULL`);
+      return send(res, 200, { ok: true, mail: r1.rowCount, link: r2.rowCount, ua: r3.rowCount, ip: r4.rowCount, nick: r5.rowCount });
+    }
+
     // ---------- repair: 删除 force 误插(45..55 孤儿重复)，并补回缺失的 ac732652 ----------
     if (op === 'repair') {
       const del = await client.query(`DELETE FROM wl_comment WHERE id > 44`);
