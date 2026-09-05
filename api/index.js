@@ -113,6 +113,41 @@ async function importRoute(req, res) {
       return send(res, 200, { ok: true, deleted: d.rowCount });
     }
 
+    // ---------- repair: 删除 force 误插(45..55 孤儿重复)，并补回缺失的 ac732652 ----------
+    if (op === 'repair') {
+      const del = await client.query(`DELETE FROM wl_comment WHERE id > 44`);
+      const p = await client.query(
+        `SELECT id FROM wl_comment WHERE url='/friends' AND nick='匿名' AND comment LIKE '%Wuの小站%' ORDER BY id LIMIT 1`);
+      let patched = 0;
+      let err = '';
+      if (p.rows.length > 0) {
+        const P = p.rows[0].id;
+        const ex = await client.query(`SELECT id FROM wl_comment WHERE pid=$1 AND rid=$1 AND nick='YuJing'`, [P]);
+        if (ex.rows.length === 0) {
+          const maxR = await client.query(`SELECT COALESCE(MAX(id),0) AS m FROM wl_comment`);
+          const nid = Number(maxR.rows[0].m) + 1;
+          await client.query(
+            `INSERT INTO wl_comment (${qid('id')},${qid('user_id')},${qid('comment')},${qid('insertedat')},${qid('ip')},${qid('link')},${qid('mail')},${qid('nick')},${qid('pid')},${qid('rid')},${qid('status')},${qid('like')},${qid('ua')},${qid('url')},${qid('createdat')},${qid('updatedat')})
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,
+            [
+              nid, 1, '<p>已添加|´・ω・)ノ</p>\n', fmtTs(1788519274064), '36.57.106.158',
+              'https://www.yujingblog.top/', '2803673194@qq.com', 'YuJing', P, P,
+              'approved', 0,
+              'Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0',
+              '/friends', fmtTs(1788519274064), fmtTs(1788519274064),
+            ]);
+          patched = 1;
+        } else {
+          err = 'ac732652 parent-target already exists';
+        }
+      } else {
+        err = 'parent 1901d608 not found';
+      }
+      await client.query(`SELECT setval(pg_get_serial_sequence('wl_comment','id'), COALESCE((SELECT MAX(id) FROM wl_comment),1))`).catch(() => {});
+      const c = await client.query(`SELECT COUNT(*)::int AS n FROM wl_comment`);
+      return send(res, 200, { ok: true, deletedOrphans: del.rowCount, patched, err, finalCount: c.rows[0].n });
+    }
+
     // ---------- run import ----------
     if (op === 'run') {
       const body = await readBody(req);
