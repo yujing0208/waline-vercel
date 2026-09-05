@@ -1,5 +1,7 @@
 // Waline 服务端入口
-// 按官方文档: https://waline.js.org/guide/deploy/vercel.html
-const { server } = require('@waline/vercel');
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
-module.exports = server;
+const waline = require('@waline/vercel');
+
+export default waline.server || waline.default || waline;
