@@ -5,6 +5,10 @@
 const IMPORT_TOKEN = '877ca50565e63a5a58d296b5540f2712f97dd9de';
 const ADMIN_EMAIL = '2803673194@qq.com';
 
+function qid(c) {
+  return '"' + String(c).replace(/"/g, '""') + '"';
+}
+
 function send(res, code, obj) {
   res.statusCode = code;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -206,7 +210,7 @@ async function importRoute(req, res) {
         if (ucUrl) vals.push(g.link || null);
         const ph = userCreateCols.map((_, i) => '$' + (i + 1)).join(',');
         const ins = await client.query(
-          `INSERT INTO wl_users (${userCreateCols.join(',')}) VALUES (${ph}) RETURNING id`,
+          `INSERT INTO wl_users (${userCreateCols.map(qid).join(',')}) VALUES (${ph}) RETURNING id`,
           vals);
         mailToUserId.set(key, ins.rows[0].id);
         createdUsers++;
@@ -271,7 +275,7 @@ async function importRoute(req, res) {
           throw new Error('column mapping mismatch');
         }
         await client.query(
-          `INSERT INTO wl_comment (${insertCols.join(',')}) VALUES (${placeholders.join(',')})`,
+          `INSERT INTO wl_comment (${insertCols.map(qid).join(',')}) VALUES (${placeholders.join(',')})`,
           vals);
         inserted++;
       }
