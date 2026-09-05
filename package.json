@@ -14,8 +14,10 @@
     "node": ">=18.0.0"
   },
   "overrides": {
-    "jsdom": "27.3.0",
-    "html-encoding-sniffer": "4.0.0"
+    "jsdom": "26.1.0",
+    "html-encoding-sniffer": "4.0.0",
+    "parse5": "7.3.0",
+    "cssstyle": "4.2.1"
   },
-  "_overridesNote": "jsdom>=27.4.0 依赖 html-encoding-sniffer@6 -> @exodus/bytes(纯ESM)，CJS require 抛 ERR_REQUIRE_ESM 导致函数启动即 500。锁 jsdom 27.3.0 保持纯 CJS 依赖链。"
+  "_overridesNote": "jsdom>=27.1 引入 parse5@8(ESM-only)；jsdom>=27.0 的 cssstyle@5 引入 @asamuzakjp/css-color -> @csstools/css-calc(ESM-only)；jsdom>=27.4 引入 html-encoding-sniffer@6 -> @exodus/bytes(ESM-only)。CJS require ESM 会抛 ERR_REQUIRE_ESM 导致函数启动即 500。锁定 jsdom 26.1.0 + 关键传递依赖，保持纯 CJS 依赖链。"
 }
